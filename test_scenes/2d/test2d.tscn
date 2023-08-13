@@ -1,0 +1,65 @@
+[gd_scene load_steps=6 format=3 uid="uid://5lhlp3y2h1ru"]
+
+[ext_resource type="Script" path="res://test_scenes/2d/test2d.gd" id="1_2necs"]
+[ext_resource type="PackedScene" uid="uid://b2l1yib0mb6ia" path="res://test_scenes/2d/unit2d.tscn" id="2_isvs1"]
+[ext_resource type="Script" path="res://addons/spawn_area/game/spawn_group_2D.gd" id="3_hninb"]
+[ext_resource type="Script" path="res://addons/spawn_area/game/spawn_area_2D.gd" id="4_asa7s"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_vlytt"]
+size = Vector2(92, 85)
+
+[node name="test2d" type="Node2D"]
+script = ExtResource("1_2necs")
+unit = ExtResource("2_isvs1")
+
+[node name="Timer" type="Timer" parent="."]
+wait_time = 0.5
+autostart = true
+
+[node name="Area2D" type="Area2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D"]
+position = Vector2(398, 300)
+shape = SubResource("RectangleShape2D_vlytt")
+
+[node name="CollisionShape2D4" type="CollisionShape2D" parent="Area2D"]
+position = Vector2(398, 159)
+shape = SubResource("RectangleShape2D_vlytt")
+
+[node name="CollisionShape2D2" type="CollisionShape2D" parent="Area2D"]
+position = Vector2(531, 336)
+shape = SubResource("RectangleShape2D_vlytt")
+
+[node name="CollisionShape2D3" type="CollisionShape2D" parent="Area2D"]
+position = Vector2(467, 375)
+shape = SubResource("RectangleShape2D_vlytt")
+
+[node name="Units" type="Node2D" parent="."]
+
+[node name="SpawnGroup2D" type="Node2D" parent="."]
+script = ExtResource("3_hninb")
+spawn_style = 1
+
+[node name="SpawnArea2D2" type="Node2D" parent="SpawnGroup2D"]
+position = Vector2(397, 81)
+script = ExtResource("4_asa7s")
+spawn_location = 1
+size = Vector2(100, 100)
+is_raycast = false
+weight = 1
+
+[node name="SpawnArea2D" type="Node2D" parent="SpawnGroup2D"]
+position = Vector2(465, 234)
+script = ExtResource("4_asa7s")
+shape = 2
+length = 300.0
+direction = 0
+is_raycast = true
+ray_direction = 1
+ray_start = 0
+ray_length = 1000
+ray_mask = 1
+collide_with_areas = true
+collide_with_bodies = true
+retry_on_miss = false
+weight = 1

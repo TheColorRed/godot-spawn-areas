@@ -1,0 +1,46 @@
+[gd_scene load_steps=7 format=3 uid="uid://bjjofm3m3dtvv"]
+
+[ext_resource type="Script" path="res://test_scenes/3d/test3d.gd" id="1_b2oga"]
+[ext_resource type="PackedScene" uid="uid://b06ubmpu8tgmo" path="res://test_scenes/3d/unit3d.tscn" id="2_nih3s"]
+[ext_resource type="Script" path="res://test_scenes/camera.gd" id="3_af7cm"]
+[ext_resource type="Script" path="res://addons/spawn_area/game/spawn_area_3D.gd" id="4_qtu01"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_fljw4"]
+size = Vector3(1, 3, 1)
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_ypw7d"]
+
+[node name="test" type="Node3D"]
+script = ExtResource("1_b2oga")
+unit = ExtResource("2_nih3s")
+
+[node name="Timer" type="Timer" parent="."]
+wait_time = 0.001
+autostart = true
+
+[node name="Units" type="Node3D" parent="."]
+
+[node name="CamreaPoint" type="Node3D" parent="Units"]
+
+[node name="Camera3D" type="Camera3D" parent="Units/CamreaPoint"]
+transform = Transform3D(1, 0, 0, 0, 0.359573, 0.933117, 0, -0.933117, 0.359573, 0, 17.4272, 14)
+script = ExtResource("3_af7cm")
+
+[node name="Area3D" type="Area3D" parent="."]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, 0, 0, 0)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Area3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.49313, 0)
+shape = SubResource("BoxShape3D_fljw4")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+transform = Transform3D(10, 0, 0, 0, 10, 0, 0, 0, 10, 0, 0, 0)
+visible = false
+mesh = SubResource("PlaneMesh_ypw7d")
+
+[node name="SpawnArea3D" type="Node3D" parent="."]
+script = ExtResource("4_qtu01")
+spawn_location = 0
+plane_shape = 0
+size = Vector3(1, 1, 1)
+is_raycast = false

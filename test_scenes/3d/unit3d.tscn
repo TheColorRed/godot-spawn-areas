@@ -1,0 +1,10 @@
+[gd_scene load_steps=2 format=3 uid="uid://b06ubmpu8tgmo"]
+
+[ext_resource type="Texture2D" uid="uid://tdmapa813mkh" path="res://test_scenes/icon.svg" id="1_q3rug"]
+
+[node name="item" type="Node3D"]
+
+[node name="Sprite3D" type="Sprite3D" parent="."]
+transform = Transform3D(0.25, 0, 0, 0, 0.25, 0, 0, 0, 0.25, 0, 0, 0)
+billboard = 1
+texture = ExtResource("1_q3rug")
