@@ -77,11 +77,11 @@ func _draw_gizmo_line(gizmo: EditorNode3DGizmo):
 
 	var vec1 := Vector3.ZERO
 	var vec2 := Vector3.ZERO
-	if node.direction == node.Direction.Horizontal:
+	if node.direction == node.LineDirection.Horizontal:
 		handles.push_back(Vector3(node.length / 2.0, 0, 0))
 		vec1 = Vector3(node.length / 2.0, 0, 0)
 		vec2 = Vector3(-node.length / 2.0, 0, 0)
-	elif node.direction == node.Direction.Vertical:
+	elif node.direction == node.LineDirection.Vertical:
 		handles.push_back(Vector3(0, node.length / 2.0, 0))
 		vec1 = Vector3(0, node.length / 2.0, 0)
 		vec2 = Vector3(0, -node.length / 2.0, 0)
@@ -227,6 +227,8 @@ func _set_handle(gizmo: EditorNode3DGizmo, handle_id: int, secondary: bool, came
 				node.size.x = p.x
 			elif handle_id == 1: # z
 				node.size.y = p.z
+	elif node.shape == node.Shape.Line:
+		node.length = p.x
 	elif node.shape == node.Shape.Sphere:
 		node.radius = p.z
 	elif node.shape == node.Shape.Box:

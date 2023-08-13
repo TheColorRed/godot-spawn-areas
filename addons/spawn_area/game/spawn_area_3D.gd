@@ -144,7 +144,7 @@ func _create_instance(item: PackedScene, point: Vector3) -> void:
 
 ## Gets the point of where the item will spawn.
 ##
-## If [null] is returned, then a ray is being used and the ray will handle the position.
+## If [null] is returned, then a ray is being used and the ray will handle the new position.
 func _get_position_on_plane(item: PackedScene) -> Variant:
 	var point := position
 	if plane_shape == PlaneShape.Rectangle:
@@ -329,12 +329,13 @@ func _has_parent(node: Variant, parent: Variant) -> bool:
 func _get_property_list() -> Array[Dictionary]:
 	var props: Array[Dictionary] = []
 
-	props.append({
-		name = 'spawn_location',
-		type = TYPE_INT,
-		hint = PROPERTY_HINT_ENUM,
-		hint_string = 'Inside,Perimeter'
-	})
+	if shape != Shape.Line:
+		props.append({
+			name = 'spawn_location',
+			type = TYPE_INT,
+			hint = PROPERTY_HINT_ENUM,
+			hint_string = 'Inside,Perimeter'
+		})
 	if shape == Shape.Line:
 		props.append({
 			name = 'length',
