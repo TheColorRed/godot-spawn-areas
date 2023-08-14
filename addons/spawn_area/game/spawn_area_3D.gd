@@ -138,10 +138,14 @@ func spawn(item: Variant) -> void:
 
 ## Creates the packed scene instance
 func _create_instance(item: PackedScene, point: Vector3) -> void:
-	var inst := item.instantiate()
-	inst.position = point
-	add_child(inst)
-	spawned.emit(inst)
+	if item is PackedScene:
+		var inst: Node = item.instantiate()
+		inst.position = point
+		add_child(inst)
+		spawned.emit(inst)
+	else:
+		item.position = point
+		spawned.emit(item)
 
 
 
@@ -323,9 +327,7 @@ func _raycast_test(spawn_location_from_ray: Vector3, item: Variant):
 
 ## This gets triggered from the raycast.
 func _hit_result(hit: bool, item: Variant, point: Vector3) -> void:
-	if hit:
-		if item is PackedScene: _create_instance(item, point)
-		else: item.position = point
+	if hit: _create_instance(item, point)
 	else: if retry_on_miss: spawn(item)
 
 

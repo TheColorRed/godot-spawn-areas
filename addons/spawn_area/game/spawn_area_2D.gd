@@ -132,11 +132,16 @@ func spawn(item: Variant) -> void:
 
 ## Creates the packed scene instance
 func _create_instance(item: Variant, point: Vector2, world_coords: bool = false) -> void:
-	var inst := item.instantiate() as Node2D
-	add_child(inst)
-	if world_coords == false: inst.position = point
-	else: inst.global_position = point
-	spawned.emit(inst)
+	if item is PackedScene:
+		var inst := item.instantiate() as Node2D
+		add_child(inst)
+		if world_coords == false: inst.position = point
+		else: inst.global_position = point
+		spawned.emit(inst)
+	else:
+		if world_coords == false: item.position = point
+		else: item.global_position = point
+		spawned.emit(item)
 
 
 
@@ -146,7 +151,6 @@ func _create_instance(item: Variant, point: Vector2, world_coords: bool = false)
 func _get_position_on_rectangle(item: Variant) -> Variant:
 	var point := _rect.position
 	var s := _rect.size
-	var p := _rect.position
 	if spawn_location == SpawnLocation.Inside:
 		point.x = randf_range(-s.x / 2.0, s.x / 2.0)
 		point.y = randf_range(-s.y / 2.0, s.y / 2.0)
@@ -220,14 +224,14 @@ func _get_position_on_point(item: Variant) -> Variant:
 
 
 ## Does a raycast test if [is_raycast] is [true].
-func _raycast_test(spawn_location: Vector2, item: Variant) -> void:
+func _raycast_test(spawn_location_from_ray: Vector2, item: Variant) -> void:
 	# Raycasting is disabled, so this is a valid location.
 	if not is_raycast: return
 
 	var dir: String = RayDirection.keys()[ray_direction]
 	# Setup the Raycast
 	var ray := RayCast2D.new()
-	ray.position = Vector2(spawn_location.x, spawn_location.y)
+	ray.position = Vector2(spawn_location_from_ray.x, spawn_location_from_ray.y)
 	ray.target_position = Vector2(0, 0)
 	ray.position[dir] = -ray_start
 	ray.target_position[dir] = ray_length
@@ -247,9 +251,7 @@ func _raycast_test(spawn_location: Vector2, item: Variant) -> void:
 
 ## This gets triggered from the raycast.
 func _hit_result(hit: bool, item: Variant, point: Vector2) -> void:
-	if hit:
-			if item is PackedScene: _create_instance(item, point, true)
-			else:	item.position = point
+	if hit: _create_instance(item, point, true)
 	else: if retry_on_miss: spawn(item)
 
 
