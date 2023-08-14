@@ -21,7 +21,7 @@ var _rng := RandomNumberGenerator.new()
 ## Picks a [code]SpawnArea2D[/code] node based on the spawn style, and spawns the item in it.
 ##
 ## To change the spawn style, change the [code]spawn_style[/code] property.
-## [code]
+## [codeblock]
 ##    @export var unit: PackedScene
 ##    @onready var group: SpawnGroup2D = $SpawnGroup2D
 ## 		func _ready() -> void:
@@ -30,7 +30,7 @@ var _rng := RandomNumberGenerator.new()
 ## 		func _on_spawned(item: Node2D) -> void:
 ## 			item.reparent(units)
 ## 		item.reparent(units)
-## [/code]
+## [/codeblock]
 func spawn(item: PackedScene) -> void:
 	var children := find_children('', 'SpawnArea2D')
 	var spawnArea := SpawnGroup.pick_area(children, spawn_style, _rng, _idx)

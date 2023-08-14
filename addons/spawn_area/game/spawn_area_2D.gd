@@ -71,7 +71,7 @@ var direction: LineDirection = LineDirection.Horizontal:
 var spawn_location: SpawnLocation = SpawnLocation.Inside
 ## Whether or not to use a raycast to detect a collision with a body or area.
 ## This is useful for creating items on an uneven surface.
-## [br][br]
+##
 ## A raycast is most optimal when used with a [code]line[/code], as nothing is usually created
 ## within the shape when using a raycast since the point is generated off of areas and bodies.
 ## Thus a sphere with a radius of [code]50[/code] and a line of a length of [code]100[/code] will end in the same
@@ -99,7 +99,7 @@ var collide_with_areas: bool = true
 ## Whether or not the ray should collide with bodies.
 var collide_with_bodies: bool = true
 ## Whether or not the ray should retry if the test was a miss.
-## [br][br]
+##
 ## If enabled, this could take a long time to get a position if there
 ## is more empty space than bodies/areas within the shape.
 var retry_on_miss: bool = false
@@ -111,10 +111,10 @@ var weight: int = 1
 ## Returns the newly created item.
 ##
 ## Use the following to change the items parent.
-## [code]
+## [codeblock]
 ## 		var item = area.spawn(unit)
 ## 		item.reparent(units)
-## [/code]
+## [/codeblock]
 func spawn(item: PackedScene) -> void:
 	var point: Variant = Vector2.ZERO
 	if shape == Shape.Rectangle: point = _get_position_on_rectangle(item)
