@@ -120,7 +120,7 @@ var weight: int = 1
 ## 		var item = area.spawn(unit)
 ## 		item.reparent(units)
 ## [/codeblock]
-func spawn(item: PackedScene) -> void:
+func spawn(item: Variant) -> void:
 	var point: Variant = Vector3.ZERO
 	if shape == Shape.Plane: point = _get_position_on_plane(item)
 	elif shape == Shape.Line: point = _get_position_on_line(item)
@@ -131,7 +131,8 @@ func spawn(item: PackedScene) -> void:
 	# If the value is null then the item is being created with a raycast test.
 	if point == null: return
 
-	_create_instance(item, point)
+	if item is PackedScene: _create_instance(item, point)
+	else:	item.position = point
 
 
 
@@ -147,7 +148,7 @@ func _create_instance(item: PackedScene, point: Vector3) -> void:
 ## Gets the point of where the item will spawn.
 ##
 ## If [null] is returned, then a ray is being used and the ray will handle the new position.
-func _get_position_on_plane(item: PackedScene) -> Variant:
+func _get_position_on_plane(item: Variant) -> Variant:
 	var point := position
 	if plane_shape == PlaneShape.Rectangle:
 		if spawn_location == SpawnLocation.Inside:
@@ -189,7 +190,7 @@ func _get_position_on_plane(item: PackedScene) -> Variant:
 
 
 ## Gets the position to create the scene on a line.
-func _get_position_on_line(item: PackedScene):
+func _get_position_on_line(item: Variant):
 	var point := position
 
 	if direction == LineDirection.Horizontal:
@@ -214,7 +215,7 @@ func _get_position_on_point(item: PackedScene):
 
 
 ## Gets the position to create the scene in a box.
-func _get_position_in_box(item: PackedScene):
+func _get_position_in_box(item: Variant):
 	var point := position
 
 	if spawn_location == SpawnLocation.Inside:
@@ -260,7 +261,7 @@ func _get_position_in_box(item: PackedScene):
 
 
 ## Gets the position to create the scene in a sphere.
-func _get_position_in_sphere(item: PackedScene):
+func _get_position_in_sphere(item: Variant):
 	var point := position
 	if spawn_location == SpawnLocation.Inside:
 		var r := radius * randf()
@@ -295,13 +296,13 @@ func _get_position_in_sphere(item: PackedScene):
 
 
 ## Does a raycast test if [is_raycast] is [true].
-func _raycast_test(spawn_location: Vector3, item: PackedScene):
+func _raycast_test(spawn_location_from_ray: Vector3, item: Variant):
 	# Raycasting is disabled, so this is a valid location.
 	if not is_raycast: return
 
 		# Setup the Raycast
 	var ray := RayCast3D.new()
-	ray.position = spawn_location
+	ray.position = spawn_location_from_ray
 	ray.position[ray_direction] += ray_height
 	ray.target_position[ray_direction] = -(ray_height * 2)
 	ray.collide_with_areas = collide_with_areas
@@ -314,7 +315,6 @@ func _raycast_test(spawn_location: Vector3, item: PackedScene):
 	ray.set_script(RayCastTest3D)
 	ray.hit.connect(_hit_result)
 	ray.item = item
-#	return ray
 
 	# Add the Raycast to the scene.
 	add_child(ray)
@@ -322,8 +322,10 @@ func _raycast_test(spawn_location: Vector3, item: PackedScene):
 
 
 ## This gets triggered from the raycast.
-func _hit_result(hit: bool, item: PackedScene, point: Vector3) -> void:
-	if hit: _create_instance(item, point)
+func _hit_result(hit: bool, item: Variant, point: Vector3) -> void:
+	if hit:
+		if item is PackedScene: _create_instance(item, point)
+		else: item.position = point
 	else: if retry_on_miss: spawn(item)
 
 

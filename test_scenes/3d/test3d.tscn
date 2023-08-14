@@ -55,6 +55,15 @@ weight = 1
 [node name="SpawnArea3D2" type="Node3D" parent="SpawnGroup3D"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.26641, 0)
 script = ExtResource("4_qtu01")
-shape = 4
-is_raycast = false
+spawn_location = 0
+plane_shape = 0
+size = Vector3(1, 1, 1)
+is_raycast = true
+is_2D = false
+ray_direction = 1
+ray_height = 500
+ray_mask = 1
+collide_with_areas = true
+collide_with_bodies = true
+retry_on_miss = false
 weight = 50

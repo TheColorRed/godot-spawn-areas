@@ -115,7 +115,7 @@ var weight: int = 1
 ## 		var item = area.spawn(unit)
 ## 		item.reparent(units)
 ## [/codeblock]
-func spawn(item: PackedScene) -> void:
+func spawn(item: Variant) -> void:
 	var point: Variant = Vector2.ZERO
 	if shape == Shape.Rectangle: point = _get_position_on_rectangle(item)
 	elif shape == Shape.Circle: point = _get_position_on_circle(item)
@@ -125,12 +125,13 @@ func spawn(item: PackedScene) -> void:
 	# If the value is null then the item is being created with a raycast.
 	if point == null: return
 
-	_create_instance(item, point)
+	if item is PackedScene: _create_instance(item, point)
+	else:	item.position = point
 
 
 
 ## Creates the packed scene instance
-func _create_instance(item: PackedScene, point: Vector2, world_coords: bool = false) -> void:
+func _create_instance(item: Variant, point: Vector2, world_coords: bool = false) -> void:
 	var inst := item.instantiate() as Node2D
 	add_child(inst)
 	if world_coords == false: inst.position = point
@@ -142,7 +143,7 @@ func _create_instance(item: PackedScene, point: Vector2, world_coords: bool = fa
 ## Gets the point of where the item will spawn on a rectangle.
 ##
 ## If [null] is returned, then a ray is being used and the ray will handle the position.
-func _get_position_on_rectangle(item: PackedScene) -> Variant:
+func _get_position_on_rectangle(item: Variant) -> Variant:
 	var point := _rect.position
 	var s := _rect.size
 	var p := _rect.position
@@ -172,7 +173,7 @@ func _get_position_on_rectangle(item: PackedScene) -> Variant:
 
 
 ## Gets the point of where the item will spawn on a circle.
-func _get_position_on_circle(item: PackedScene) -> Variant:
+func _get_position_on_circle(item: Variant) -> Variant:
 	var point := Vector2.ZERO
 	if spawn_location == SpawnLocation.Inside:
 		# https://stackoverflow.com/questions/5837572/generate-a-random-point-within-a-circle-uniformly
@@ -194,7 +195,7 @@ func _get_position_on_circle(item: PackedScene) -> Variant:
 
 
 ## Gets the position to create the item on a line.
-func _get_position_on_line(item: PackedScene) -> Variant:
+func _get_position_on_line(item: Variant) -> Variant:
 	var point := position
 
 	if direction == LineDirection.Horizontal:
@@ -210,7 +211,7 @@ func _get_position_on_line(item: PackedScene) -> Variant:
 
 
 ## Gets the position to create the item on a point.
-func _get_position_on_point(item: PackedScene) -> Variant:
+func _get_position_on_point(item: Variant) -> Variant:
 	if is_raycast:
 		_raycast_test(Vector2.ZERO, item)
 		return null
@@ -219,7 +220,7 @@ func _get_position_on_point(item: PackedScene) -> Variant:
 
 
 ## Does a raycast test if [is_raycast] is [true].
-func _raycast_test(spawn_location: Vector2, item: PackedScene) -> void:
+func _raycast_test(spawn_location: Vector2, item: Variant) -> void:
 	# Raycasting is disabled, so this is a valid location.
 	if not is_raycast: return
 
@@ -245,8 +246,10 @@ func _raycast_test(spawn_location: Vector2, item: PackedScene) -> void:
 
 
 ## This gets triggered from the raycast.
-func _hit_result(hit: bool, item: PackedScene, point: Vector2) -> void:
-	if hit: _create_instance(item, point, true)
+func _hit_result(hit: bool, item: Variant, point: Vector2) -> void:
+	if hit:
+			if item is PackedScene: _create_instance(item, point, true)
+			else:	item.position = point
 	else: if retry_on_miss: spawn(item)
 
 
