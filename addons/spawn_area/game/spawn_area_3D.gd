@@ -7,10 +7,11 @@ const SG := preload('res://addons/spawn_area/game/spawn_group_3D.gd')
 signal spawned(node: Node)
 
 enum Shape {
-	Plane,  ## A flat 2d rectangle or circle that works in 3d and 2d scenes.
+	Plane,  ## A flat 2d rectangle or circle.
 	Line,   ## line that works in 3d and 2d scenes.
 	Box,    ## A 3d box that works best in 3d scenes.
-	Sphere  ## A 3d sphere that works best in 3d scenes.
+	Sphere, ## A 3d sphere that works best in 3d scenes.
+	Point	  ## A single point in space.
 }
 
 enum PlaneShape {
@@ -123,6 +124,7 @@ func spawn(item: PackedScene) -> void:
 	var point: Variant = Vector3.ZERO
 	if shape == Shape.Plane: point = _get_position_on_plane(item)
 	elif shape == Shape.Line: point = _get_position_on_line(item)
+	elif shape == Shape.Point: point = _get_position_on_point(item)
 	elif shape == Shape.Sphere: point = _get_position_in_sphere(item)
 	elif shape == Shape.Box: point = _get_position_in_box(item)
 
@@ -199,6 +201,15 @@ func _get_position_on_line(item: PackedScene):
 		_raycast_test(point, item)
 		return null
 	return point
+
+
+
+## Gets the position of the point.
+func _get_position_on_point(item: PackedScene):
+	if is_raycast:
+		_raycast_test(position, item)
+		return null
+	return position
 
 
 
@@ -329,7 +340,7 @@ func _has_parent(node: Variant, parent: Variant) -> bool:
 func _get_property_list() -> Array[Dictionary]:
 	var props: Array[Dictionary] = []
 
-	if shape != Shape.Line:
+	if shape != Shape.Line and shape != Shape.Point:
 		props.append({
 			name = 'spawn_location',
 			type = TYPE_INT,
