@@ -102,53 +102,57 @@ var collide_with_bodies: bool = true
 ##
 ## If enabled, this could take a long time to get a position if there
 ## is more empty space than bodies/areas within the shape.
-var retry_on_miss: bool = false
+var retry_on_miss: bool = false:
+	set(value):
+		retry_on_miss = value
+		notify_property_list_changed()
+## The maximum number of times to retry if the raycast was a miss.
+var max_retry_count = 10
+## The number of times the raycast has been retried.
+var _retry_count = 0
 ## The weight of the item. This is used for [code]SpawnGroup2D[/code] weighted spawning.
 var weight: int = 1
 
-
-## Spawns the item randomly within the node.
-## Returns the newly created item.
-##
-## Use the following to change the items parent.
-## [codeblock]
-## 		var item = area.spawn(unit)
-## 		item.reparent(units)
-## [/codeblock]
-func spawn(item: Variant) -> void:
+## Gets a point randomly within the shape.
+## Returns a [code]Vector2[/code] if a point was found, otherwise [code]null[/code] is returned.
+## If [code]null[/code] is returned, then a ray was used and was not able to find a valid position.
+func point() -> Variant:
 	var point: Variant = Vector2.ZERO
-	if shape == Shape.Rectangle: point = _get_position_on_rectangle(item)
-	elif shape == Shape.Circle: point = _get_position_on_circle(item)
-	elif shape == Shape.Line: point = _get_position_on_line(item)
-	elif shape == Shape.Point: point = _get_position_on_point(item)
-
-	# If the value is null then the item is being created with a raycast.
-	if point == null: return
-
-	if item is PackedScene: _create_instance(item, point)
-	else:	item.position = point
+	if shape == Shape.Rectangle: point = await _get_position_on_rectangle()
+	elif shape == Shape.Circle: point = await _get_position_on_circle()
+	elif shape == Shape.Line: point = await _get_position_on_line()
+	elif shape == Shape.Point: point = await _get_position_on_point()
+	return point
 
 
 
-## Creates the packed scene instance
-func _create_instance(item: Variant, point: Vector2, world_coords: bool = false) -> void:
+## Creates an item at the specified point. You can either [code]await[/code] the created item or connect to the [code]spawned[/code] signal.
+## If a [code]PackedScene[/code] is passed, then it will be instantiated and added to the scene.
+## If a [code]Node[/code] is passed, then it will be repositioned to the point.
+## If [code]null[/code] is passed, then nothing will be created.
+func spawn(item: Variant, point: Variant, world_coords: bool = false) -> Variant:
+	if point == null:
+		return null
 	if item is PackedScene:
 		var inst := item.instantiate() as Node2D
 		add_child(inst)
 		if world_coords == false: inst.position = point
 		else: inst.global_position = point
 		spawned.emit(inst)
-	else:
+		return inst
+	elif item is Node:
 		if world_coords == false: item.position = point
 		else: item.global_position = point
 		spawned.emit(item)
+		return item
+	return null
 
 
 
 ## Gets the point of where the item will spawn on a rectangle.
 ##
 ## If [null] is returned, then a ray is being used and the ray will handle the position.
-func _get_position_on_rectangle(item: Variant) -> Variant:
+func _get_position_on_rectangle() -> Variant:
 	var point := _rect.position
 	var s := _rect.size
 	if spawn_location == SpawnLocation.Inside:
@@ -170,14 +174,15 @@ func _get_position_on_rectangle(item: Variant) -> Variant:
 				point.y = s.y / 2.0
 				point.x = randf_range(-s.x / 2.0, s.x / 2.0)
 	if is_raycast:
-		_raycast_test(point, item)
-		return null
+		var val = await _raycast_test(point)
+		if val == null: return null
+		else: return val
 	return point
 
 
 
 ## Gets the point of where the item will spawn on a circle.
-func _get_position_on_circle(item: Variant) -> Variant:
+func _get_position_on_circle() -> Variant:
 	var point := Vector2.ZERO
 	if spawn_location == SpawnLocation.Inside:
 		# https://stackoverflow.com/questions/5837572/generate-a-random-point-within-a-circle-uniformly
@@ -192,14 +197,15 @@ func _get_position_on_circle(item: Variant) -> Variant:
 		point.y = sin(angle) * radius
 
 	if is_raycast:
-		_raycast_test(point, item)
-		return null
+		var val = await _raycast_test(point)
+		if val == null: return null
+		else: return val
 	return point
 
 
 
 ## Gets the position to create the item on a line.
-func _get_position_on_line(item: Variant) -> Variant:
+func _get_position_on_line() -> Variant:
 	var point := position
 
 	if direction == LineDirection.Horizontal:
@@ -208,23 +214,25 @@ func _get_position_on_line(item: Variant) -> Variant:
 		point = Vector2(0, randf_range(-length / 2.0, length / 2.0))
 
 	if is_raycast:
-		_raycast_test(point, item)
-		return null
+		var val = await _raycast_test(point)
+		if val == null: return null
+		else: return val
 	return point
 
 
 
 ## Gets the position to create the item on a point.
-func _get_position_on_point(item: Variant) -> Variant:
+func _get_position_on_point() -> Variant:
 	if is_raycast:
-		_raycast_test(Vector2.ZERO, item)
-		return null
+		var val = await _raycast_test(Vector2.ZERO)
+		if val == null: return null
+		else: return val
 	return Vector2.ZERO
 
 
 
 ## Does a raycast test if [is_raycast] is [true].
-func _raycast_test(spawn_location_from_ray: Vector2, item: Variant) -> void:
+func _raycast_test(spawn_location_from_ray: Vector2) -> Variant:
 	# Raycasting is disabled, so this is a valid location.
 	if not is_raycast: return
 
@@ -241,18 +249,19 @@ func _raycast_test(spawn_location_from_ray: Vector2, item: Variant) -> void:
 
 	# Setup the Raycast script and attach the spawnable item.
 	ray.set_script(RayCastTest2D)
-	ray.hit.connect(_hit_result)
-	ray.item = item
 
 	# Add the Raycast to the scene.
 	add_child(ray)
 
-
-
-## This gets triggered from the raycast.
-func _hit_result(hit: bool, item: Variant, point: Vector2) -> void:
-	if hit: _create_instance(item, point, true)
-	else: if retry_on_miss: spawn(item)
+	var hit: Array = await ray.hit
+	if hit[0]: return to_local(hit[1])
+	else: if retry_on_miss:
+		if _retry_count < max_retry_count:
+			_retry_count += 1
+			return await point()
+		else: _retry_count = 0
+		# return await point()
+	return null
 
 
 
@@ -374,6 +383,11 @@ func _get_property_list() -> Array[Dictionary]:
 			name = 'retry_on_miss',
 			type = TYPE_BOOL,
 		})
+		if retry_on_miss:
+			props.append({
+				name = 'max_retry_count',
+				type = TYPE_INT,
+			})
 
 	if _has_parent(self, SpawnGroup2D):
 		props.append({

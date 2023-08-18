@@ -35,9 +35,11 @@ func spawn(item: PackedScene):
 	var spawnArea := SpawnGroup.pick_area(children, spawn_style, _rng, _idx)
 	if spawnArea is Array:
 		for area in spawnArea as Array[SpawnArea3D]:
-			area.spawn(item)
+			var point = await area.point()
+			area.spawn(item, point)
 	else:
-		(spawnArea as SpawnArea3D).spawn(item)
+		var point = await (spawnArea as SpawnArea3D).point()
+		spawnArea.spawn(item, point)
 
 
 

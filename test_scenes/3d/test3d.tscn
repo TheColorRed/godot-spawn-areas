@@ -41,14 +41,13 @@ mesh = SubResource("PlaneMesh_ypw7d")
 
 [node name="SpawnGroup3D" type="Node3D" parent="."]
 script = ExtResource("4_tw4rx")
-spawn_style = 4
-seed = "Level 1"
+spawn_style = 2
 
 [node name="SpawnArea3D" type="Node3D" parent="SpawnGroup3D"]
 script = ExtResource("4_qtu01")
-shape = 1
-length = 20.0
-direction = 0
+shape = 3
+spawn_location = 0
+radius = 1.0
 is_raycast = false
 weight = 1
 
@@ -58,12 +57,5 @@ script = ExtResource("4_qtu01")
 spawn_location = 0
 plane_shape = 0
 size = Vector3(1, 1, 1)
-is_raycast = true
-is_2D = false
-ray_direction = 1
-ray_height = 500
-ray_mask = 1
-collide_with_areas = true
-collide_with_bodies = true
-retry_on_miss = false
+is_raycast = false
 weight = 50

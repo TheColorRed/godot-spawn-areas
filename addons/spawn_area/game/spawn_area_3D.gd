@@ -5,6 +5,7 @@ const RayCastTest3D := preload('res://addons/spawn_area/game/raycast_3D.gd')
 const SG := preload('res://addons/spawn_area/game/spawn_group_3D.gd')
 
 signal spawned(node: Node)
+signal found_location(point: Vector3)
 
 enum Shape {
 	Plane,  ## A flat 2d rectangle or circle.
@@ -107,52 +108,51 @@ var collide_with_bodies: bool = true
 ##
 ## If enabled, this could take a long time to get a position if there
 ## is more empty space than bodies/areas within the shape.
-var retry_on_miss: bool = false
+var retry_on_miss: bool = false:
+	set(value):
+		retry_on_miss = value
+		notify_property_list_changed()
+## The maximum number of times to retry if the raycast was a miss.
+var max_retry_count = 10
+## The number of times the raycast has been retried.
+var _retry_count = 0
 ## The weight of the item. This is used for [code]SpawnGroup2D[/code] weighted spawning.
 var weight: int = 1
 
 
-## Spawns the item randomly within the node.
-## Returns the newly created item.
-##
-## Use the following to change the items parent.
-## [codeblock]
-## 		var item = area.spawn(unit)
-## 		item.reparent(units)
-## [/codeblock]
-func spawn(item: Variant) -> void:
+## Gets a point randomly within the shape.
+## Returns a [code]Vector2[/code] if a point was found, otherwise [code]null[/code] is returned.
+## If [code]null[/code] is returned, then a ray was used and was not able to find a valid position.
+func point() -> Variant:
 	var point: Variant = Vector3.ZERO
-	if shape == Shape.Plane: point = _get_position_on_plane(item)
-	elif shape == Shape.Line: point = _get_position_on_line(item)
-	elif shape == Shape.Point: point = _get_position_on_point(item)
-	elif shape == Shape.Sphere: point = _get_position_in_sphere(item)
-	elif shape == Shape.Box: point = _get_position_in_box(item)
-
-	# If the value is null then the item is being created with a raycast test.
-	if point == null: return
-
-	if item is PackedScene: _create_instance(item, point)
-	else:	item.position = point
+	if shape == Shape.Plane: point = await _get_position_on_plane()
+	elif shape == Shape.Line: point = await _get_position_on_line()
+	elif shape == Shape.Point: point = await _get_position_on_point()
+	elif shape == Shape.Sphere: point = await _get_position_in_sphere()
+	elif shape == Shape.Box: point = await _get_position_in_box()
+	return point
 
 
-
-## Creates the packed scene instance
-func _create_instance(item: PackedScene, point: Vector3) -> void:
+func spawn(item: Variant, point: Vector3) -> Variant:
+	if point == null:
+		return null
 	if item is PackedScene:
-		var inst: Node = item.instantiate()
-		inst.position = point
+		var inst := item.instantiate() as Node3D
 		add_child(inst)
+		inst.position = point
 		spawned.emit(inst)
-	else:
+		return inst
+	elif item is Node:
 		item.position = point
 		spawned.emit(item)
-
+		return item
+	return null
 
 
 ## Gets the point of where the item will spawn.
 ##
 ## If [null] is returned, then a ray is being used and the ray will handle the new position.
-func _get_position_on_plane(item: Variant) -> Variant:
+func _get_position_on_plane() -> Variant:
 	var point := position
 	if plane_shape == PlaneShape.Rectangle:
 		if spawn_location == SpawnLocation.Inside:
@@ -187,14 +187,15 @@ func _get_position_on_plane(item: Variant) -> Variant:
 			point.z = sin(angle) * radius
 
 	if is_raycast:
-		_raycast_test(point, item)
-		return null
+		var val = await _raycast_test(point)
+		if val == null: return null
+		else: return val
 	return point
 
 
 
 ## Gets the position to create the scene on a line.
-func _get_position_on_line(item: Variant):
+func _get_position_on_line():
 	var point := position
 
 	if direction == LineDirection.Horizontal:
@@ -203,23 +204,25 @@ func _get_position_on_line(item: Variant):
 		point = Vector3(0, randf_range(-length / 2.0, length / 2.0), 0)
 
 	if is_raycast:
-		_raycast_test(point, item)
-		return null
+		var val = await _raycast_test(point)
+		if val == null: return null
+		else: return val
 	return point
 
 
 
 ## Gets the position of the point.
-func _get_position_on_point(item: PackedScene):
+func _get_position_on_point():
 	if is_raycast:
-		_raycast_test(position, item)
-		return null
+		var val = await _raycast_test(position)
+		if val == null: return null
+		else: return val
 	return position
 
 
 
 ## Gets the position to create the scene in a box.
-func _get_position_in_box(item: Variant):
+func _get_position_in_box():
 	var point := position
 
 	if spawn_location == SpawnLocation.Inside:
@@ -258,14 +261,15 @@ func _get_position_in_box(item: Variant):
 
 
 	if is_raycast:
-		_raycast_test(point, item)
-		return null
+		var val = await _raycast_test(point)
+		if val == null: return null
+		else: return val
 	return point
 
 
 
 ## Gets the position to create the scene in a sphere.
-func _get_position_in_sphere(item: Variant):
+func _get_position_in_sphere():
 	var point := position
 	if spawn_location == SpawnLocation.Inside:
 		var r := radius * randf()
@@ -293,14 +297,15 @@ func _get_position_in_sphere(item: Variant):
 		point = Vector3(x,y,z)
 
 	if is_raycast:
-		_raycast_test(point, item)
-		return null
+		var val = await _raycast_test(point)
+		if val == null: return null
+		else: return val
 	return point
 
 
 
 ## Does a raycast test if [is_raycast] is [true].
-func _raycast_test(spawn_location_from_ray: Vector3, item: Variant):
+func _raycast_test(spawn_location_from_ray: Vector3):
 	# Raycasting is disabled, so this is a valid location.
 	if not is_raycast: return
 
@@ -317,18 +322,19 @@ func _raycast_test(spawn_location_from_ray: Vector3, item: Variant):
 
 	# Setup the Raycast script and attach the spawnable item.
 	ray.set_script(RayCastTest3D)
-	ray.hit.connect(_hit_result)
-	ray.item = item
 
 	# Add the Raycast to the scene.
 	add_child(ray)
 
-
-
-## This gets triggered from the raycast.
-func _hit_result(hit: bool, item: Variant, point: Vector3) -> void:
-	if hit: _create_instance(item, point)
-	else: if retry_on_miss: spawn(item)
+	var hit: Array = await ray.hit
+	if hit[0]: return to_local(hit[1])
+	else: if retry_on_miss:
+		if _retry_count < max_retry_count:
+			_retry_count += 1
+			return await point()
+		else: _retry_count = 0
+		# return await point()
+	return null
 
 
 

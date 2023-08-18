@@ -31,14 +31,16 @@ var _rng := RandomNumberGenerator.new()
 ## 			item.reparent(units)
 ## 		item.reparent(units)
 ## [/codeblock]
-func spawn(item: PackedScene) -> void:
+func spawn(item: Variant) -> void:
 	var children := find_children('', 'SpawnArea2D')
 	var spawnArea := SpawnGroup.pick_area(children, spawn_style, _rng, _idx)
 	if spawnArea is Array:
 		for area in spawnArea as Array[SpawnArea2D]:
-			area.spawn(item)
+			var point = await area.point()
+			area.spawn(item, point)
 	else:
-		(spawnArea as SpawnArea2D).spawn(item)
+		var point = await (spawnArea as SpawnArea2D).point()
+		spawnArea.spawn(item, point)
 
 
 
